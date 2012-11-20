@@ -316,6 +316,11 @@ public class DefaultMavenReportExecutor
                 return null;
             }
 
+            boolean aggregator = mojoExecution.getMojoDescriptor().isAggregator();
+            if (aggregator && !"pom".equals(  mavenReportExecutorRequest.getProject().getPackaging()))
+            {
+                return null;
+            }
             Mojo mojo = mavenPluginManager.getConfiguredMojo( Mojo.class,
                                                               mavenReportExecutorRequest.getMavenSession(),
                                                               mojoExecution );
