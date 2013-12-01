@@ -60,25 +60,6 @@ public abstract class CommandLineUtils
         }
     }
 
-    private static class ProcessHook
-        extends Thread
-    {
-        private final Process process;
-
-        private ProcessHook( Process process )
-        {
-            super( "CommandlineUtils process shutdown hook" );
-            this.process = process;
-            this.setContextClassLoader( null );
-        }
-
-        public void run()
-        {
-            process.destroy();
-        }
-    }
-
-
     @SuppressWarnings( "UnusedDeclaration" )
     public static int executeCommandLine( Commandline cl, StreamConsumer systemOut, StreamConsumer systemErr )
         throws CommandLineException
@@ -136,8 +117,29 @@ public abstract class CommandLineUtils
                                           Runnable runAfterProcessTermination )
         throws CommandLineException
     {
+        return executeCommandLine( cl, systemIn, systemOut, systemErr, timeoutInSeconds, runAfterProcessTermination, 15 );
+    }
+
+    /**
+     * @param cl               The command line to execute
+     * @param systemIn         The input to read from, must be thread safe
+     * @param systemOut        A consumer that receives output, must be thread safe
+     * @param systemErr        A consumer that receives system error stream output, must be thread safe
+     * @param timeoutInSeconds Positive integer to specify timeout, zero and negative integers for no timeout.
+     * @param runAfterProcessTermination Optional callback to run after the process terminated or the the timeout was
+     *  exceeded, but before waiting on the stream feeder and pumpers to finish.
+     * @param killSignal       Signal to use when destroying the process
+     * @return A return value, see {@link Process#exitValue()}
+     * @throws CommandLineException or CommandLineTimeOutException if time out occurs
+     * @noinspection ThrowableResultOfMethodCallIgnored
+     */
+    public static int executeCommandLine( Commandline cl, InputStream systemIn, StreamConsumer systemOut,
+                                          StreamConsumer systemErr, int timeoutInSeconds,
+                                          Runnable runAfterProcessTermination, int killSignal )
+        throws CommandLineException
+    {
         final CommandLineCallable future =
-            executeCommandLineAsCallable( cl, systemIn, systemOut, systemErr, timeoutInSeconds, runAfterProcessTermination );
+            executeCommandLineAsCallable( cl, systemIn, systemOut, systemErr, timeoutInSeconds, runAfterProcessTermination, killSignal );
         return future.call();
     }
 
@@ -150,6 +152,7 @@ public abstract class CommandLineUtils
      * @param systemErr        A consumer that receives system error stream output, must be thread safe
      * @param timeoutInSeconds Positive integer to specify timeout, zero and negative integers for no timeout.
      * @param runAfterProcessTermination Optional callback to run after the process terminated or the the timeout was
+     * @param killSignal       Signal to use when destroying the process
      * @return A CommandLineCallable that provides the process return value, see {@link Process#exitValue()}. "call" must be called on
      *         this to be sure the forked process has terminated, no guarantees is made about
      *         any internal state before after the completion of the call statements
@@ -160,7 +163,8 @@ public abstract class CommandLineUtils
                                                                     final StreamConsumer systemOut,
                                                                     final StreamConsumer systemErr,
                                                                     final int timeoutInSeconds,
-                                                                    final Runnable runAfterProcessTermination )
+                                                                    final Runnable runAfterProcessTermination,
+                                                                    final int killSignal)
         throws CommandLineException
     {
         if ( cl == null )
@@ -185,7 +189,7 @@ public abstract class CommandLineUtils
 
         errorPumper.start();
 
-        final ProcessHook processHook = new ProcessHook( p );
+        final ProcessHook processHook = createProcessHook( p, killSignal );
 
         ShutdownHookUtils.addShutDownHook( processHook );
 
@@ -267,6 +271,15 @@ public abstract class CommandLineUtils
                 }
             }
         };
+    }
+
+    private static ProcessHook createProcessHook(Process p, int killSignal) {
+      try {
+        Class.forName("org.hyperic.sigar.Sigar");
+        return new SigarProcessHook(p, killSignal);
+      } catch (ClassNotFoundException e) {
+        return new StandardProcessHook(p);
+      }
     }
 
     private static void waitForAllPumpers( StreamFeeder inputFeeder, StreamPumper outputPumper,
