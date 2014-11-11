@@ -253,7 +253,11 @@ public class Commandline
      */
     public String[] getCommandline()
     {
-        final String[] args = getArguments();
+        return getCommandline( getArguments() );
+    }
+
+    private String[] getCommandline( String[] args )
+    {
         String executable = getExecutable();
 
         if ( executable == null )
@@ -266,12 +270,13 @@ public class Commandline
         return result;
     }
 
+
     /**
      * @return the shell, executable and all defined arguments without masking any arguments.
      */
     private String[] getShellCommandline()
     {
-        return getShellCommandline( false ) ;
+        return getShellCommandline( false );
     }
 
     /**
@@ -281,7 +286,12 @@ public class Commandline
      */
     private String[] getShellCommandline( boolean mask )
     {
-        List<String> shellCommandLine = getShell().getShellCommandLine( getArguments( mask ) );
+        final String[] arguments = getArguments( mask );
+        if ( Os.isFamily( Os.FAMILY_WINDOWS ) )
+        {
+            return getCommandline( arguments );
+        }
+        List<String> shellCommandLine = getShell().getShellCommandLine( arguments );
         return shellCommandLine.toArray( new String[shellCommandLine.size()] );
     }
 
