@@ -433,32 +433,6 @@ public class FileUtilsTest
         assertTrue( Java7Support.isSymLink(  destination ));
     }
 
-    @SuppressWarnings( "ResultOfMethodCallIgnored" )
-    @Test
-    public void mkdirsWithSymlinks()
-        throws Exception
-    {
-        assumeTrue( Java7Support.isAtLeastJava7() );
-        File destination = new File( tempFolder.getRoot(), "/symCopy" );
-        destination.mkdirs();
-        File source = new File( "src/test/resources/symlinks/src" );
-        DirectoryScanner ds = new DirectoryScanner();
-        ds.setBasedir(  source );
-        ds.setFollowSymlinks( false );
-        ds.scan();
-
-        FileUtils.mkDirs(  source, ds.getIncludedDirectories(), destination );
-        for ( String s : ds.getIncludedFiles() )
-        {
-
-            File src = new File( source, s);
-            File dst = new File( destination, s);
-
-            FileUtils.copyFile(  src, dst);
-        }
-
-        assertTrue( Java7Support.isSymLink(  destination ));
-    }
 
 
     @Test
