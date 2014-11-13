@@ -792,6 +792,28 @@ public class FileUtils
         copyFileIfModified( source, new File( destinationDirectory, source.getName() ) );
     }
 
+    /**
+     * Creates a number of directories, as delivered from DirectoryScanner
+     * @param sourceBase The basedir used for the directory scan
+     * @param dirs The getIncludedDirs from the dirscanner
+     * @param destination The base dir of the output structure
+     */
+    public static void mkDirs( @Nonnull final File sourceBase, String[] dirs, @Nonnull final File destination )
+        throws IOException
+    {
+        for ( String dir : dirs )
+        {
+            File src = new File( sourceBase, dir);
+            File dst = new File( destination, dir);
+            if (Java7Support.isJava7() && Java7Support.isSymLink( src )){
+                File target = Java7Support.readSymbolicLink( src );
+                Java7Support.createSymbolicLink( dst, target );
+            } else {
+                dst.mkdirs();
+            }
+        }
+    }
+
 
     /**
      * Copy file from source to destination. The directories up to <code>destination</code> will be
@@ -813,6 +835,11 @@ public class FileUtils
         {
             final String message = "File " + source + " does not exist";
             throw new IOException( message );
+        }
+        if (Java7Support.isAtLeastJava7() && Java7Support.isSymLink(  source )){
+            File target = Java7Support.readSymbolicLink( source );
+            Java7Support.createSymbolicLink( destination, target );
+            return;
         }
 
         //check source != destination, see PLXUTILS-10
