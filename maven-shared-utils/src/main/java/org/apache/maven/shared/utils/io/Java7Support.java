@@ -23,8 +23,13 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.file.CopyOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Java7 feature detection
@@ -52,6 +57,8 @@ public class Java7Support
 
     private static Object emptyLinkOpts;
 
+    private static Object[] copyOptions;
+
     private static Object emptyFileAttributes;
 
     static
@@ -64,6 +71,7 @@ public class Java7Support
             Class<?> path = cl.loadClass( "java.nio.file.Path" );
             Class<?> fa = cl.loadClass( "java.nio.file.attribute.FileAttribute" );
             Class<?> linkOption = cl.loadClass( "java.nio.file.LinkOption" );
+            Class<?> copyOption = cl.loadClass( "java.nio.file.CopyOption" );
             isSymbolicLink = files.getMethod( "isSymbolicLink", path );
             delete = files.getMethod( "delete", path );
             readSymlink = files.getMethod( "readSymbolicLink", path );
@@ -72,7 +80,14 @@ public class Java7Support
             final Object o = emptyFileAttributes;
             createSymlink = files.getMethod( "createSymbolicLink", path, path, o.getClass() );
             emptyLinkOpts = Array.newInstance( linkOption, 0 );
+            copyOptions = (Object[]) Array.newInstance( copyOption, 1 );
+            Class<?> standardCopyOPTIONS = cl.loadClass( "java.nio.file.StandardCopyOption" );
+            Field copy_attributes = standardCopyOPTIONS.getEnumConstants( "COPY_ATTRIBUTES" );
+
+            copyOptions[0] =
             exists = files.getMethod( "exists", path, emptyLinkOpts.getClass() );
+            exists = files.getMethod( "exists", path, emptyLinkOpts.getClass() );
+            CopyOption
             toPath = File.class.getMethod( "toPath" );
             toFile = path.getMethod( "toFile" );
         }
@@ -91,7 +106,7 @@ public class Java7Support
     {
         try
         {
-            Object path = toPath.invoke( file );
+            Object path = toPath( file );
             return (Boolean) isSymbolicLink.invoke( null, path );
         }
         catch ( IllegalAccessException e )
@@ -110,7 +125,7 @@ public class Java7Support
     {
         try
         {
-            Object path = toPath.invoke( symlink );
+            Object path = toPath( symlink );
             Object resultPath =  readSymlink.invoke( null, path );
             return (File) toFile.invoke( resultPath );
         }
@@ -124,13 +139,36 @@ public class Java7Support
         }
     }
 
+    private static Object toPath( File symlink )
+    {
+        try
+        {
+            return toPath.invoke( symlink );
+        }
+        catch ( IllegalAccessException e )
+        {
+            throw new RuntimeException( e );
+        }
+        catch ( InvocationTargetException e )
+        {
+            throw new RuntimeException( e.getTargetException() );
+        }
+    }
+
+    public static File copy(File source, File target)
+        throws IOException
+    {
+        Path copy = Files.copy( source.toPath(), target.toPath(), StandardCopyOption.COPY_ATTRIBUTES );
+        return copy.toFile();
+    }
+
 
     public static boolean exists( @Nonnull File file )
         throws IOException
     {
         try
         {
-            Object path = toPath.invoke( file );
+            Object path = toPath( file );
             final Object invoke = exists.invoke( null, path, emptyLinkOpts );
             return (Boolean) invoke;
         }
@@ -152,8 +190,8 @@ public class Java7Support
         {
             if ( !exists( symlink ) )
             {
-                Object link = toPath.invoke( symlink );
-                Object path = createSymlink.invoke( null, link, toPath.invoke( target ), emptyFileAttributes );
+                Object link = toPath( symlink );
+                Object path = createSymlink.invoke( null, link, toPath( target ), emptyFileAttributes );
                 return (File) toFile.invoke( path );
             }
             return symlink;
@@ -179,7 +217,7 @@ public class Java7Support
     {
         try
         {
-            Object path = toPath.invoke( file );
+            Object path = toPath( file );
             delete.invoke( null, path );
         }
         catch ( IllegalAccessException e )
