@@ -28,6 +28,9 @@ import org.codehaus.plexus.interpolation.InterpolationException;
 import org.codehaus.plexus.interpolation.Interpolator;
 import org.codehaus.plexus.interpolation.RecursionInterceptor;
 import org.codehaus.plexus.interpolation.SimpleRecursionInterceptor;
+import org.codehaus.plexus.interpolation.fixed.FixedInterpolator;
+import org.codehaus.plexus.interpolation.fixed.InterpolationCycleException;
+import org.codehaus.plexus.interpolation.fixed.InterpolationState;
 
 /**
  * A FilterReader implementation, that works with Interpolator interface instead of it's own interpolation
@@ -44,9 +47,9 @@ public class InterpolatorFilterReaderLineEnding
     /**
      * Interpolator used to interpolate
      */
-    private Interpolator interpolator;
+    private FixedInterpolator interpolator;
 
-    private RecursionInterceptor recursionInterceptor;
+    private InterpolationState interpolationState;
 
     /**
      * replacement text from a token
@@ -104,7 +107,7 @@ public class InterpolatorFilterReaderLineEnding
      */
     public InterpolatorFilterReaderLineEnding(
                                                Reader in,
-                                               Interpolator interpolator,
+                                               FixedInterpolator interpolator,
                                                String beginToken,
                                                String endToken,
                                                boolean supportMultiLineFiltering )
@@ -122,7 +125,7 @@ public class InterpolatorFilterReaderLineEnding
      */
     private InterpolatorFilterReaderLineEnding(
                                                 Reader in,
-                                                Interpolator interpolator,
+                                                FixedInterpolator interpolator,
                                                 String beginToken,
                                                 String endToken,
                                                 RecursionInterceptor ri,
@@ -133,11 +136,11 @@ public class InterpolatorFilterReaderLineEnding
 
         this.interpolator = interpolator;
 
+        this.interpolationState = new InterpolationState();
+
         this.beginToken = beginToken;
 
         this.endToken = endToken;
-
-        recursionInterceptor = ri;
 
         this.supportMultiLineFiltering = supportMultiLineFiltering;
 
@@ -359,14 +362,14 @@ public class InterpolatorFilterReaderLineEnding
             {
                 if ( interpolateWithPrefixPattern )
                 {
-                    value = interpolator.interpolate( key.toString(), "", recursionInterceptor );
+                    value = interpolator.interpolate( key.toString(), interpolationState );
                 }
                 else
                 {
-                    value = interpolator.interpolate( key.toString(), recursionInterceptor );
+                    value = interpolator.interpolate( key.toString(), interpolationState );
                 }
             }
-            catch ( InterpolationException e )
+            catch ( InterpolationCycleException e )
             {
                 IllegalArgumentException error = new IllegalArgumentException( e.getMessage() );
                 error.initCause( e );
@@ -446,14 +449,9 @@ public class InterpolatorFilterReaderLineEnding
         this.preserveEscapeString = preserveEscapeString;
     }
 
-    public RecursionInterceptor getRecursionInterceptor()
-    {
-        return recursionInterceptor;
-    }
-
     public InterpolatorFilterReaderLineEnding setRecursionInterceptor( RecursionInterceptor theRecursionInterceptor )
     {
-        this.recursionInterceptor = theRecursionInterceptor;
+        this.interpolationState.setRecursionInterceptor( theRecursionInterceptor );
         return this;
     }
 

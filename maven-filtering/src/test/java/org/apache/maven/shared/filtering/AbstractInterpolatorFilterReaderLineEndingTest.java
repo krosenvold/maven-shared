@@ -29,6 +29,8 @@ import java.io.StringReader;
 
 import org.codehaus.plexus.interpolation.Interpolator;
 import org.codehaus.plexus.interpolation.RecursionInterceptor;
+import org.codehaus.plexus.interpolation.fixed.FixedInterpolator;
+import org.codehaus.plexus.interpolation.fixed.InterpolationState;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +41,7 @@ public abstract class AbstractInterpolatorFilterReaderLineEndingTest
 {
 
     @Mock
-    private Interpolator interpolator;
+    private FixedInterpolator interpolator;
 
     @Before
     public void onSetup()
@@ -51,7 +53,7 @@ public abstract class AbstractInterpolatorFilterReaderLineEndingTest
     public void testDefaults()
         throws Exception
     {
-        when( interpolator.interpolate( eq( "${a}" ), eq( "" ), isA( RecursionInterceptor.class ) ) ).thenReturn( "DONE_A" );
+        when( interpolator.interpolate( eq( "${a}" ), isA( InterpolationState.class ) ) ).thenReturn( "DONE_A" );
 
         Reader in = new StringReader( "text without expression" );
         Reader reader = getDollarBracesReader( in, interpolator, "\\" );
@@ -87,8 +89,10 @@ public abstract class AbstractInterpolatorFilterReaderLineEndingTest
     public void testCustomDelimiters()
         throws Exception
     {
-        when( interpolator.interpolate( eq( "aaaFILTER.a.MEaaa" ), eq( "" ), isA( RecursionInterceptor.class ) ) ).thenReturn( "DONE" );
-        when( interpolator.interpolate( eq( "abcFILTER.a.MEabc" ), eq( "" ), isA( RecursionInterceptor.class ) ) ).thenReturn( "DONE" );
+        when( interpolator.interpolate( eq( "aaaFILTER.a.MEaaa" ), isA( InterpolationState.class ) ) ).thenReturn(
+            "DONE" );
+        when( interpolator.interpolate( eq( "abcFILTER.a.MEabc" ), isA( InterpolationState.class ) ) ).thenReturn(
+            "DONE" );
 
         Reader in = new StringReader( "aaaFILTER.a.MEaaa" );
         Reader reader = getAaa_AaaReader( in, interpolator );
@@ -111,12 +115,12 @@ public abstract class AbstractInterpolatorFilterReaderLineEndingTest
         assertEquals( "@\").replace(p,\"]\").replace(q,\"", IOUtil.toString( reader ) );
     }
 
-    protected abstract Reader getAbc_AbcReader( Reader in, Interpolator interpolator );
+    protected abstract Reader getAbc_AbcReader( Reader in, FixedInterpolator interpolator );
 
-    protected abstract Reader getAaa_AaaReader( Reader in, Interpolator interpolator );
+    protected abstract Reader getAaa_AaaReader( Reader in, FixedInterpolator interpolator );
 
-    protected abstract Reader getDollarBracesReader( Reader in, Interpolator interpolator, String escapeString );
+    protected abstract Reader getDollarBracesReader( Reader in, FixedInterpolator interpolator, String escapeString );
 
-    protected abstract Reader getAtReader( Reader in, Interpolator interpolator, String escapeString );
+    protected abstract Reader getAtReader( Reader in, FixedInterpolator interpolator, String escapeString );
 
 }

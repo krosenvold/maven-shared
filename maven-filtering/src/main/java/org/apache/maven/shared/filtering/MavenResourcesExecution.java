@@ -33,6 +33,7 @@ import org.codehaus.plexus.interpolation.Interpolator;
 import org.codehaus.plexus.interpolation.RegexBasedInterpolator;
 import org.codehaus.plexus.interpolation.StringSearchInterpolator;
 import org.codehaus.plexus.interpolation.ValueSource;
+import org.codehaus.plexus.interpolation.fixed.FixedInterpolator;
 
 /**
  * A bean to configure a resources filtering execution.
@@ -252,7 +253,7 @@ public class MavenResourcesExecution
         {
             public Reader getReader( Reader reader )
             {
-                Interpolator propertiesInterpolator = new RegexBasedInterpolator();
+                FixedInterpolator propertiesInterpolator = new FixedRegexBasedInterpolator();
                 propertiesInterpolator.addValueSource( valueSource );
                 return new InterpolatorFilterReaderLineEnding( reader, propertiesInterpolator,
                                                                InterpolatorFilterReaderLineEnding.DEFAULT_BEGIN_TOKEN,

@@ -31,6 +31,9 @@ import org.codehaus.plexus.interpolation.InterpolationException;
 import org.codehaus.plexus.interpolation.Interpolator;
 import org.codehaus.plexus.interpolation.RecursionInterceptor;
 import org.codehaus.plexus.interpolation.SimpleRecursionInterceptor;
+import org.codehaus.plexus.interpolation.fixed.FixedInterpolator;
+import org.codehaus.plexus.interpolation.fixed.InterpolationCycleException;
+import org.codehaus.plexus.interpolation.fixed.InterpolationState;
 import org.codehaus.plexus.interpolation.multi.DelimiterSpecification;
 
 /**
@@ -48,9 +51,9 @@ public class MultiDelimiterInterpolatorFilterReaderLineEnding
     /**
      * Interpolator used to interpolate
      */
-    private Interpolator interpolator;
+    private FixedInterpolator interpolator;
 
-    private RecursionInterceptor recursionInterceptor;
+    private InterpolationState interpolationState;
 
     /**
      * replacement text from a token
@@ -103,31 +106,17 @@ public class MultiDelimiterInterpolatorFilterReaderLineEnding
 
     private boolean eof = false;
 
-    /**
-     * This constructor uses default begin token ${ and default end token }.
-     *
-     * @param in reader to use
-     * @param interpolator interpolator instance to use
-     * @param supportMultiLineFiltering If multi line filtering is allowed
-     */
-    public MultiDelimiterInterpolatorFilterReaderLineEnding(
-                                                             Reader in,
-                                                             Interpolator interpolator,
-                                                             boolean supportMultiLineFiltering )
-    {
-        this( in, interpolator, new SimpleRecursionInterceptor(), supportMultiLineFiltering );
-    }
 
     /**
      * @param in reader to use
      * @param interpolator interpolator instance to use
-     * @param ri The {@link RecursionInterceptor} to use to prevent recursive expressions.
+     * @param is The {@link InterpolationState} to use when interpolating.
      * @param supportMultiLineFiltering If multi line filtering is allowed
      */
     public MultiDelimiterInterpolatorFilterReaderLineEnding(
                                                              Reader in,
-                                                             Interpolator interpolator,
-                                                             RecursionInterceptor ri,
+                                                             FixedInterpolator interpolator,
+                                                             InterpolationState is,
                                                              boolean supportMultiLineFiltering )
     {
         // wrap our own buffer, so we can use mark/reset safely.
@@ -135,10 +124,7 @@ public class MultiDelimiterInterpolatorFilterReaderLineEnding
 
         this.interpolator = interpolator;
 
-        // always cache answers, since we'll be sending in pure expressions, not mixed text.
-        this.interpolator.setCacheAnswers( true );
-
-        recursionInterceptor = ri;
+        this.interpolationState = is;
 
         delimiters.add( DelimiterSpecification.DEFAULT_SPEC );
 
@@ -400,14 +386,14 @@ public class MultiDelimiterInterpolatorFilterReaderLineEnding
             {
                 if ( interpolateWithPrefixPattern )
                 {
-                    value = interpolator.interpolate( key.toString(), "", recursionInterceptor );
+                    value = interpolator.interpolate( key.toString(), interpolationState );
                 }
                 else
                 {
-                    value = interpolator.interpolate( key.toString(), recursionInterceptor );
+                    value = interpolator.interpolate( key.toString(), interpolationState );
                 }
             }
-            catch ( InterpolationException e )
+            catch ( InterpolationCycleException e )
             {
                 IllegalArgumentException error = new IllegalArgumentException( e.getMessage() );
                 error.initCause( e );
@@ -496,13 +482,6 @@ public class MultiDelimiterInterpolatorFilterReaderLineEnding
         this.preserveEscapeString = preserveEscapeString;
     }
 
-    /**
-     * @return {@link RecursionInterceptor} 
-     */
-    public RecursionInterceptor getRecursionInterceptor()
-    {
-        return recursionInterceptor;
-    }
 
     /**
      * @param givenRecursionInterceptor {@link RecursionInterceptor}
@@ -511,7 +490,7 @@ public class MultiDelimiterInterpolatorFilterReaderLineEnding
     public MultiDelimiterInterpolatorFilterReaderLineEnding setRecursionInterceptor(
                                                                     RecursionInterceptor givenRecursionInterceptor )
     {
-        this.recursionInterceptor = givenRecursionInterceptor;
+        this.interpolationState.setRecursionInterceptor( givenRecursionInterceptor );
         return this;
     }
 

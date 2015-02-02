@@ -33,6 +33,9 @@ import org.codehaus.plexus.interpolation.RecursionInterceptor;
 import org.codehaus.plexus.interpolation.SimpleRecursionInterceptor;
 import org.codehaus.plexus.interpolation.SingleResponseValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
+import org.codehaus.plexus.interpolation.fixed.FixedInterpolator;
+import org.codehaus.plexus.interpolation.fixed.FixedMultiDelimiterStringSearchInterpolator;
+import org.codehaus.plexus.interpolation.fixed.InterpolationState;
 import org.codehaus.plexus.interpolation.multi.MultiDelimiterStringSearchInterpolator;
 import org.codehaus.plexus.logging.AbstractLogEnabled;
 
@@ -179,7 +182,7 @@ class BaseFilter
 
         if ( request != null )
         {
-            Interpolator interpolator =
+            FixedInterpolator interpolator =
                 createInterpolator( request.getDelimiters(), request.getProjectStartExpressions(),
                                     propertiesValueSource, request.getMavenProject(), request.getMavenSession(),
                                     request.getEscapeString(), request.isEscapeWindowsPaths() );
@@ -232,7 +235,7 @@ class BaseFilter
         extends FileUtils.FilterWrapper
     {
 
-        private final Interpolator interpolator;
+        private final FixedInterpolator interpolator;
 
         private LinkedHashSet<String> delimiters;
 
@@ -242,7 +245,7 @@ class BaseFilter
 
         private boolean supportMultiLineFiltering;
 
-        Wrapper( Interpolator interpolator, LinkedHashSet<String> delimiters, List<String> projectStartExpressions,
+        Wrapper( FixedInterpolator interpolator, LinkedHashSet<String> delimiters, List<String> projectStartExpressions,
                  String escapeString, boolean supportMultiLineFiltering )
         {
             super();
@@ -255,11 +258,7 @@ class BaseFilter
 
         public Reader getReader( Reader reader )
         {
-            interpolator.clearAnswers(); // Needed with stateful interpolator TODO use fixed
-            interpolator.clearFeedback(); // Needed with stateful interpolator TODO use fixed
-            MultiDelimiterInterpolatorFilterReaderLineEnding filterReader =
-                new MultiDelimiterInterpolatorFilterReaderLineEnding( reader, interpolator, supportMultiLineFiltering );
-
+            InterpolationState is = new InterpolationState();
             final RecursionInterceptor ri;
             if ( projectStartExpressions != null && !projectStartExpressions.isEmpty() )
             {
@@ -269,6 +268,11 @@ class BaseFilter
             {
                 ri = new SimpleRecursionInterceptor();
             }
+            is.setRecursionInterceptor( ri );
+
+            MultiDelimiterInterpolatorFilterReaderLineEnding filterReader =
+                new MultiDelimiterInterpolatorFilterReaderLineEnding( reader, interpolator, is, supportMultiLineFiltering );
+
 
             filterReader.setRecursionInterceptor( ri );
             filterReader.setDelimiterSpecs( delimiters );
@@ -281,14 +285,14 @@ class BaseFilter
 
     }
 
-    private static Interpolator createInterpolator( LinkedHashSet<String> delimiters,
+    private static FixedInterpolator createInterpolator( LinkedHashSet<String> delimiters,
                                                     List<String> projectStartExpressions,
                                                     ValueSource propertiesValueSource, MavenProject project,
                                                     MavenSession mavenSession, String escapeString,
                                                     boolean escapeWindowsPaths )
     {
-        MultiDelimiterStringSearchInterpolator interpolator = new MultiDelimiterStringSearchInterpolator();
-        interpolator.setDelimiterSpecs( delimiters );
+        FixedMultiDelimiterStringSearchInterpolator interpolator = FixedMultiDelimiterStringSearchInterpolator.create();
+        interpolator = interpolator.withDelimiterSpec( delimiters );
 
         interpolator.addValueSource( propertiesValueSource );
 
@@ -314,7 +318,7 @@ class BaseFilter
 
         if ( escapeWindowsPaths )
         {
-            interpolator.addPostProcessor( new InterpolationPostProcessor()
+            interpolator = interpolator.withPostProcessor( new InterpolationPostProcessor()
             {
                 public Object execute( String expression, Object value )
                 {

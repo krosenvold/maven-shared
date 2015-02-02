@@ -22,24 +22,25 @@ package org.apache.maven.shared.filtering;
 import java.io.Reader;
 
 import org.codehaus.plexus.interpolation.Interpolator;
+import org.codehaus.plexus.interpolation.fixed.FixedInterpolator;
 
 public class InterpolatorFilterReaderLineEndingTest
     extends AbstractInterpolatorFilterReaderLineEndingTest
 {
     @Override
-    protected Reader getAaa_AaaReader( Reader in, Interpolator interpolator )
+    protected Reader getAaa_AaaReader( Reader in, FixedInterpolator interpolator )
     {
         return new InterpolatorFilterReaderLineEnding( in, interpolator, "aaa", "aaa", true );
     }
 
     @Override
-    protected Reader getAbc_AbcReader( Reader in, Interpolator interpolator )
+    protected Reader getAbc_AbcReader( Reader in, FixedInterpolator interpolator )
     {
         return new InterpolatorFilterReaderLineEnding( in, interpolator, "abc", "abc", true );
     }
 
     @Override
-    protected Reader getDollarBracesReader( Reader in, Interpolator interpolator, String escapeString )
+    protected Reader getDollarBracesReader( Reader in, FixedInterpolator interpolator, String escapeString )
     {
         InterpolatorFilterReaderLineEnding reader =
             new InterpolatorFilterReaderLineEnding( in, interpolator, "${", "}", true );
@@ -48,7 +49,7 @@ public class InterpolatorFilterReaderLineEndingTest
     }
 
     @Override
-    protected Reader getAtReader( Reader in, Interpolator interpolator, String escapeString )
+    protected Reader getAtReader( Reader in, FixedInterpolator interpolator, String escapeString )
     {
         InterpolatorFilterReaderLineEnding reader =
             new InterpolatorFilterReaderLineEnding( in, interpolator, "@", "@", true );

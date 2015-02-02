@@ -32,6 +32,8 @@ import java.util.HashSet;
 
 import org.codehaus.plexus.interpolation.Interpolator;
 import org.codehaus.plexus.interpolation.RecursionInterceptor;
+import org.codehaus.plexus.interpolation.fixed.FixedInterpolator;
+import org.codehaus.plexus.interpolation.fixed.InterpolationState;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,8 +45,9 @@ public class MultiDelimiterInterpolatorFilterReaderLineEndingTest
 {
 
     @Mock
-    private Interpolator interpolator;
+    private FixedInterpolator interpolator;
 
+    private final InterpolationState is = new InterpolationState();
     @Before
     public void onSetup()
     {
@@ -52,38 +55,38 @@ public class MultiDelimiterInterpolatorFilterReaderLineEndingTest
     }
 
     @Override
-    protected Reader getAaa_AaaReader( Reader in, Interpolator interpolator )
+    protected Reader getAaa_AaaReader( Reader in, FixedInterpolator interpolator )
     {
         MultiDelimiterInterpolatorFilterReaderLineEnding reader =
-            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, true );
+            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, is, true );
         reader.setDelimiterSpecs( Collections.singleton( "aaa*aaa" ) );
         return reader;
     }
 
     @Override
-    protected Reader getAbc_AbcReader( Reader in, Interpolator interpolator )
+    protected Reader getAbc_AbcReader( Reader in, FixedInterpolator interpolator )
     {
         MultiDelimiterInterpolatorFilterReaderLineEnding reader =
-            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, true );
+            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, is, true );
         reader.setDelimiterSpecs( Collections.singleton( "abc*abc" ) );
         return reader;
     }
 
     @Override
-    protected Reader getDollarBracesReader( Reader in, Interpolator interpolator, String escapeString )
+    protected Reader getDollarBracesReader( Reader in, FixedInterpolator interpolator, String escapeString )
     {
         MultiDelimiterInterpolatorFilterReaderLineEnding reader =
-            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, true );
+            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, is, true );
         reader.setDelimiterSpecs( Collections.singleton( "${*}" ) );
         reader.setEscapeString( escapeString );
         return reader;
     }
 
     @Override
-    protected Reader getAtReader( Reader in, Interpolator interpolator, String escapeString )
+    protected Reader getAtReader( Reader in, FixedInterpolator interpolator, String escapeString )
     {
         MultiDelimiterInterpolatorFilterReaderLineEnding reader =
-            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, true );
+            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, is, true );
         reader.setDelimiterSpecs( Collections.singleton( "@" ) );
         reader.setEscapeString( escapeString );
         return reader;
@@ -94,11 +97,11 @@ public class MultiDelimiterInterpolatorFilterReaderLineEndingTest
     public void testLineWithSingleAtAndExpression()
         throws Exception
     {
-        when( interpolator.interpolate( eq( "${foo}" ), eq( "" ), isA( RecursionInterceptor.class ) ) ).thenReturn( "bar" );
+        when( interpolator.interpolate( eq( "${foo}" ), isA( InterpolationState.class ) ) ).thenReturn( "bar" );
 
         Reader in = new StringReader( "toto@titi.com ${foo}" );
         MultiDelimiterInterpolatorFilterReaderLineEnding reader =
-            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, true );
+            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, is, true );
         reader.setDelimiterSpecs( new HashSet<String>( Arrays.asList( "${*}", "@" ) ) );
 
         assertEquals( "toto@titi.com bar", IOUtil.toString( reader ) );
@@ -109,13 +112,15 @@ public class MultiDelimiterInterpolatorFilterReaderLineEndingTest
     public void testAtDollarExpression()
         throws Exception
     {
-        when( interpolator.interpolate( eq( "${db.server}" ), eq( "" ), isA( RecursionInterceptor.class ) ) ).thenReturn( "DB_SERVER" );
-        when( interpolator.interpolate( eq( "${db.port}" ), eq( "" ), isA( RecursionInterceptor.class ) ) ).thenReturn( "DB_PORT" );
-        when( interpolator.interpolate( eq( "${db.name}" ), eq( "" ), isA( RecursionInterceptor.class ) ) ).thenReturn( "DB_NAME" );
+        when( interpolator.interpolate( eq( "${db.server}" ), isA( InterpolationState.class ) ) ).thenReturn( "DB_SERVER" );
+        when( interpolator.interpolate( eq( "${db.port}" ), isA( InterpolationState.class ) ) ).thenReturn(
+            "DB_PORT" );
+        when( interpolator.interpolate( eq( "${db.name}" ), isA( InterpolationState.class ) ) ).thenReturn(
+            "DB_NAME" );
 
         Reader in = new StringReader( "  url=\"jdbc:oracle:thin:\\@${db.server}:${db.port}:${db.name}\"" );
         MultiDelimiterInterpolatorFilterReaderLineEnding reader =
-            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, true );
+            new MultiDelimiterInterpolatorFilterReaderLineEnding( in, interpolator, is, true );
         reader.setEscapeString( "\\" );
         reader.setDelimiterSpecs( new HashSet<String>( Arrays.asList( "${*}", "@" ) ) );
 
