@@ -66,7 +66,8 @@ public class ClassFileVisitorUtilsTest
         writeEntry( out, "a/b/c.jpg", "jpeg a.b.c" );
         out.close();
 
-        Mock mock = mock( ClassFileVisitor.class );
+        Mock mock = mock( ClassFileVisitor
+                              .class );
 
         ClassFileVisitorUtils.accept( file.toURI().toURL(), (ClassFileVisitor) mock.proxy() );
 
