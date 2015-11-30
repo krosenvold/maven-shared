@@ -115,6 +115,21 @@ public class DefaultProjectDependencyAnalyzerTest
         assertEquals( expectedAnalysis, actualAnalysis );
     }
 
+
+    public void testImportOnlyDependencies()
+        throws TestToolsException, ProjectDependencyAnalyzerException
+    {
+        compileProject( "importOnlyDependencies/pom.xml" );
+
+        MavenProject project = getProject( "importOnlyDependencies/pom.xml" );
+
+        ProjectDependencyAnalysis actualAnalysis = analyzer.analyze( project );
+
+        ProjectDependencyAnalysis expectedAnalysis = new ProjectDependencyAnalysis();
+
+        assertEquals( expectedAnalysis, actualAnalysis );
+    }
+
     public void testJarWithCompileDependency()
         throws TestToolsException, ProjectDependencyAnalyzerException
     {

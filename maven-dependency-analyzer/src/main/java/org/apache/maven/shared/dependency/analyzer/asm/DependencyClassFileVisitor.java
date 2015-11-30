@@ -64,6 +64,17 @@ public class DependencyClassFileVisitor
         {
             ClassReader reader = new ClassReader( in );
 
+            final DependenciesClassAdapter v = new DependenciesClassAdapter();
+            Collector c = new Collector( resultCollector, "" );
+
+            reader.accept( v, ClassReader.EXPAND_FRAMES );
+
+            for ( String s : v.getDependencies() )
+            {
+                resultCollector.add(  s );
+            }
+
+
             AnnotationVisitor annotationVisitor = new DefaultAnnotationVisitor( resultCollector );
             SignatureVisitor signatureVisitor = new DefaultSignatureVisitor( resultCollector );
             FieldVisitor fieldVisitor = new DefaultFieldVisitor( annotationVisitor, resultCollector );

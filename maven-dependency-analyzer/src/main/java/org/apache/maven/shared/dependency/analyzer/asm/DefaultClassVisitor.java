@@ -54,8 +54,7 @@ public class DefaultClassVisitor
     // constructors -----------------------------------------------------------
 
     public DefaultClassVisitor( SignatureVisitor signatureVisitor, AnnotationVisitor annotationVisitor,
-                                FieldVisitor fieldVisitor, MethodVisitor methodVisitor,
-                                ResultCollector resultCollector )
+                                FieldVisitor fieldVisitor, MethodVisitor methodVisitor, ResultCollector resultCollector )
     {
         super( Opcodes.ASM5 );
         this.signatureVisitor = signatureVisitor;
@@ -64,6 +63,7 @@ public class DefaultClassVisitor
         this.methodVisitor = methodVisitor;
         this.resultCollector = resultCollector;
     }
+
 
     public void visit( final int version, final int access, final String name, final String signature,
                        final String superName, final String[] interfaces )

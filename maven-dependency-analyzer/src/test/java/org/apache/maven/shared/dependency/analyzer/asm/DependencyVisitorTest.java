@@ -58,8 +58,8 @@ public class DependencyVisitorTest
         signatureVisitor = new DefaultSignatureVisitor(resultCollector);
         fieldVisitor = new DefaultFieldVisitor(annotationVisitor, resultCollector);
         mv = new DefaultMethodVisitor(annotationVisitor, signatureVisitor, resultCollector);
-        visitor = classVisitor = new DefaultClassVisitor(signatureVisitor, annotationVisitor,
-                fieldVisitor, mv, resultCollector);
+        visitor = classVisitor = new DefaultClassVisitor( signatureVisitor, annotationVisitor,
+                                                          fieldVisitor, mv, resultCollector);
     }
 
     // visit tests ------------------------------------------------------------
