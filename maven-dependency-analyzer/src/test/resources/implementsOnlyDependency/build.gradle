@@ -1,0 +1,32 @@
+buildscript {
+
+  repositories {
+    mavenCentral()
+    jcenter()
+  }
+
+  dependencies {
+    classpath "ca.cutterslade.gradle:gradle-dependency-analyze:1.0.3"
+  }
+}
+
+plugins {
+  id 'java'
+  id 'maven'
+}
+
+repositories {
+  mavenCentral()
+  jcenter()
+}
+
+
+
+
+apply plugin: "ca.cutterslade.analyze"
+
+dependencies {
+  compile 'dom4j:dom4j:1.6.1'
+}
+
+

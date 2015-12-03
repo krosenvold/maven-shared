@@ -65,7 +65,7 @@ public class DependencyClassFileVisitor
             ClassReader reader = new ClassReader( in );
 
             final DependenciesClassAdapter v = new DependenciesClassAdapter();
-            Collector c = new Collector( resultCollector, "" );
+
 
             reader.accept( v, ClassReader.EXPAND_FRAMES );
 

@@ -19,16 +19,13 @@ package importOnlyDependencies;
  * under the License.
  */
 
-import org.dom4j.Node;
-import org.dom4j.Text;
-import org.xml.sax.Parser;
+import javax.xml.bind.Element;
 
-public class Project
+import org.dom4j.jaxb.JAXBObjectHandler;
+
+public class Project implements JAXBObjectHandler
 {
-    public static final short myvalue = Node.ELEMENT_NODE;
+    public void handleObject(Element element) throws Exception {
 
-    public Project()
-    {
-        // no op
     }
 }

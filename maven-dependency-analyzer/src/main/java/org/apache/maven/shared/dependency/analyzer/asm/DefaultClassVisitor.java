@@ -54,14 +54,14 @@ public class DefaultClassVisitor
     // constructors -----------------------------------------------------------
 
     public DefaultClassVisitor( SignatureVisitor signatureVisitor, AnnotationVisitor annotationVisitor,
-                                FieldVisitor fieldVisitor, MethodVisitor methodVisitor, ResultCollector resultCollector )
+                                FieldVisitor fieldVisitor, MethodVisitor methodVisitor, ResultCollector rc )
     {
         super( Opcodes.ASM5 );
         this.signatureVisitor = signatureVisitor;
         this.annotationVisitor = annotationVisitor;
         this.fieldVisitor = fieldVisitor;
         this.methodVisitor = methodVisitor;
-        this.resultCollector = resultCollector;
+        this.resultCollector = rc;
     }
 
 

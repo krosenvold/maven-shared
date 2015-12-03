@@ -69,7 +69,7 @@ public class DefaultProjectDependencyAnalyzer
     {
         try
         {
-            Map<Artifact, Set<String>> artifactClassMap = buildArtifactClassMap( project );
+            Map<Artifact, Set<String>> artifactClassMap = buildArtifactClassMap(  project );
 
             Set<String> dependencyClasses = buildDependencyClasses( project );
 
